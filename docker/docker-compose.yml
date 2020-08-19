@@ -1,0 +1,106 @@
+version: '2.1'
+
+networks:
+    dp-network:
+        driver: bridge
+        driver_opts:
+            com.docker.network.enable_ipv6: "false"
+        ipam:
+            driver: default
+            config:
+                - subnet: 172.45.0.0/16
+                  gateway: 172.45.0.1
+
+services:
+
+    dp-nginx:
+        image: nginx:1.17
+        container_name: dp-nginx
+        volumes:
+            - ../code:/code
+            - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+            - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+            - ../../log/nginx:/var/log/nginx
+
+        networks:
+            - dp-network
+        ports:
+            - 21080:80
+
+    dp-redis:
+        image: redis:5.0
+        container_name: dp-redis
+
+        volumes:
+            - ../../redis:/data
+            - ./redis/redis.conf:/etc/redis/redis.conf:ro
+
+        networks:
+            - dp-network
+
+        logging:
+            driver: "gelf"
+            options:
+                gelf-address: ${GELF_ADDR}
+                tag: "dp-redis"
+
+        restart: ${RESTARTING}
+
+    dp-php:
+        image:  leadpier/pl3:phpV37312b
+        build:
+            #context: ./php/dockerfile_pull
+            context: ./php/dockerfile_build
+
+            args:
+                USER_ID: ${USER_ID}
+                GROUP_ID: ${GROUP_ID}
+                USER_DOCKER: ${USER_DOCKER}
+
+        container_name: dp-php
+        volumes:
+            - /tmp:/tmp
+            - ../code:/code
+            - ./php/phantomjs_driver_entrypoint.sh:/phantomjs_driver_entrypoint.sh:ro
+            - ./php/chrome_driver_entrypoint.sh:/chrome_driver_entrypoint.sh:ro
+            - ./php/supervisord.conf:/etc/supervisor/conf.d/supervisord.conf:ro
+            - ./php/php.ini:/usr/local/etc/php/php.ini:ro
+            - ../../log/php/php_error.log:/var/log/php_error.log
+            - /dev/shm:/dev/shm
+
+        networks:
+            - dp-network
+        logging:
+            driver: "gelf"
+            options:
+                gelf-address: ${GELF_ADDR}
+                tag: "dp-php"
+
+        restart: ${RESTARTING}
+
+    dp-mariaDB:
+        image: mariadb:10.3
+        container_name: dp-mariaDB
+        volumes:
+            - ../../base:/var/lib/mysql
+            - ./mariaDB/mariadb.cnf:/etc/mysql/mariadb.cnf:ro
+            - ./mariaDB/my.cnf:/etc/mysql/my.cnf:ro
+
+        networks:
+            - dp-network
+        ports:
+            - 21306:3306
+        logging:
+            driver: "gelf"
+            options:
+                gelf-address: ${GELF_ADDR}
+                tag: "dp-mariaDB"
+
+        environment:
+            - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+            - MYSQL_DATABASE=${MYSQL_DATABASE}
+            - MYSQL_USER=${MYSQL_USER}
+            - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+
+        restart: ${RESTARTING}
+        command: --wait_timeout=28800
