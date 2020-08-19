@@ -38,12 +38,6 @@ services:
         networks:
             - dp-network
 
-        logging:
-            driver: "gelf"
-            options:
-                gelf-address: ${GELF_ADDR}
-                tag: "dp-redis"
-
         restart: ${RESTARTING}
 
     dp-php:
@@ -70,11 +64,6 @@ services:
 
         networks:
             - dp-network
-        logging:
-            driver: "gelf"
-            options:
-                gelf-address: ${GELF_ADDR}
-                tag: "dp-php"
 
         restart: ${RESTARTING}
 
@@ -90,11 +79,6 @@ services:
             - dp-network
         ports:
             - 21306:3306
-        logging:
-            driver: "gelf"
-            options:
-                gelf-address: ${GELF_ADDR}
-                tag: "dp-mariaDB"
 
         environment:
             - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}

@@ -7,10 +7,8 @@ Symfony 4, Nginx, PHP, Redis, MariaDB
 <code>
 docker-compose build
 docker-compose up -d
-docker-compose exec pl3-php composer install
 
-
-acces : http://localhost:17080/
+access : http://localhost:21080/
 
 
 </code>
