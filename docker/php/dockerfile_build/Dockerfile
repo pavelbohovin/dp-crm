@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends && apt-get inst
         zip \
         unzip \
         libfontconfig \
+        npm \
         zlib1g-dev libicu-dev g++ # for php intl
 
 RUN pecl install -o -f redis
